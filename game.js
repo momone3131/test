@@ -8,13 +8,15 @@ const game_over_screen = document.getElementById('game-over-screen');
 const start_button = document.getElementById('start-button');
 const return_button = document.getElementById('return-button');
 const final_score = document.getElementById('final-score');
+const game_over_message = document.getElementById('game-over-message');
 const param_grid = document.getElementById('param-grid');
 const start_high_score = document.getElementById('start-high-score');
 const game_over_high_score = document.getElementById('game-over-high-score');
 const mobile_controls = document.getElementById('mobile-controls');
-const mobile_rotation_slider = document.getElementById('mobile-rotation-slider');
+const mobile_rotation_pad = document.getElementById('mobile-rotation-pad');
 const mobile_jump_button = document.getElementById('mobile-jump-button');
 const mobile_mode_toggle = document.getElementById('mobile-mode-toggle');
+const game_over_mobile_mode_toggle = document.getElementById('game-over-mobile-mode-toggle');
 
 const default_params = {
   gravity: 1450,
@@ -133,6 +135,31 @@ function has_coarse_pointer() {
   return window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 }
 
+function resize_canvas_to_display() {
+  // Keep the game world at a fixed 16:9 canvas resolution.
+  // CSS controls the displayed size to avoid mobile aspect-ratio distortion.
+  if (canvas.width !== 960) canvas.width = 960;
+  if (canvas.height !== 540) canvas.height = 540;
+}
+
+function mobile_pointer_to_zone(client_x) {
+  if (!mobile_rotation_pad) return 0;
+  const rect = mobile_rotation_pad.getBoundingClientRect();
+  if (rect.width <= 0) return 0;
+  const local_x = clamp(client_x - rect.left, 0, rect.width);
+  const zone_width = rect.width / 3;
+  if (local_x < zone_width) return -1;
+  if (local_x > zone_width * 2) return 1;
+  return 0;
+}
+
+function update_mobile_rotation_pad_visual() {
+  if (!mobile_rotation_pad) return;
+  mobile_rotation_pad.classList.toggle('left-active', mobile_rotation_input < 0);
+  mobile_rotation_pad.classList.toggle('neutral-active', mobile_rotation_input === 0);
+  mobile_rotation_pad.classList.toggle('right-active', mobile_rotation_input > 0);
+}
+
 function get_rotation_control() {
   const keyboard_control = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
   return clamp(keyboard_control + mobile_rotation_input, -1, 1);
@@ -145,11 +172,23 @@ function update_mobile_controls_visibility() {
   if (mobile_controls) mobile_controls.classList.toggle('visible', should_show);
   if (game_shell) game_shell.classList.toggle('mobile-layout', mobile_layout_enabled);
   document.body.classList.toggle('mobile-layout-active', mobile_layout_enabled);
+  requestAnimationFrame(resize_canvas_to_display);
 }
 
 function reset_mobile_rotation() {
   mobile_rotation_input = 0;
-  if (mobile_rotation_slider) mobile_rotation_slider.value = '0';
+  update_mobile_rotation_pad_visual();
+}
+
+function sync_mobile_toggles(source = null) {
+  if (source === mobile_mode_toggle && mobile_mode_toggle) {
+    mobile_mode_enabled = mobile_mode_toggle.checked;
+  } else if (source === game_over_mobile_mode_toggle && game_over_mobile_mode_toggle) {
+    mobile_mode_enabled = game_over_mobile_mode_toggle.checked;
+  }
+
+  if (mobile_mode_toggle) mobile_mode_toggle.checked = mobile_mode_enabled;
+  if (game_over_mobile_mode_toggle) game_over_mobile_mode_toggle.checked = mobile_mode_enabled;
 }
 
 function update_high_score_display() {
@@ -337,6 +376,7 @@ function read_params_from_ui() {
 }
 
 function reset_game() {
+  sync_mobile_toggles();
   read_params_from_ui();
   initialize_audio();
   ensure_audio_running();
@@ -345,7 +385,7 @@ function reset_game() {
 
   const foot_x = 90;
   const foot_y = ground_y_at(foot_x);
-  const start_angle = -0.18;
+  const start_angle = 0;
   player = {
     foot_x,
     foot_y,
@@ -1394,6 +1434,7 @@ function draw_start_preview() {
 }
 
 function draw() {
+  resize_canvas_to_display();
   draw_background();
   draw_terrain();
   draw_obstacles();
@@ -1414,7 +1455,9 @@ function end_game() {
   reset_mobile_rotation();
   if (game_over_sound_kind === 'polar_bear') play_polar_bear_catch_sound();
   else play_game_over_sound();
-  final_score.textContent = `Score: ${score} / ${game_over_reason}`;
+  if (final_score) final_score.textContent = `Score: ${score}`;
+  if (game_over_message) game_over_message.textContent = game_over_reason;
+  sync_mobile_toggles();
   game_over_screen.classList.add('visible');
 }
 
@@ -1460,7 +1503,7 @@ window.addEventListener('keydown', (event) => {
     }
 
     if (state === 'start') reset_game();
-    else if (state === 'game_over') return_to_start_screen();
+    else if (state === 'game_over') reset_game();
     else keys.space = true;
 
     event.preventDefault();
@@ -1478,36 +1521,59 @@ start_button.addEventListener('click', () => {
   ensure_audio_running();
   reset_game();
 });
-return_button.addEventListener('click', return_to_start_screen);
+return_button.addEventListener('click', () => {
+  initialize_audio();
+  ensure_audio_running();
+  reset_game();
+});
 
 
 if (mobile_mode_toggle) {
   mobile_mode_toggle.addEventListener('change', () => {
-    mobile_mode_enabled = mobile_mode_toggle.checked;
+    sync_mobile_toggles(mobile_mode_toggle);
     update_mobile_controls_visibility();
   });
 }
 
-if (mobile_rotation_slider) {
-  mobile_rotation_slider.addEventListener('input', () => {
-    mobile_rotation_input = clamp(Number(mobile_rotation_slider.value) / 100, -1, 1);
+if (game_over_mobile_mode_toggle) {
+  game_over_mobile_mode_toggle.addEventListener('change', () => {
+    sync_mobile_toggles(game_over_mobile_mode_toggle);
+    update_mobile_controls_visibility();
   });
-
-  const release_slider = () => {
-    // 모바일에서는 손을 떼면 방향키를 뗀 것처럼 0으로 복귀시킨다.
-    reset_mobile_rotation();
-  };
-  mobile_rotation_slider.addEventListener('change', release_slider);
-  mobile_rotation_slider.addEventListener('pointerup', release_slider);
-  mobile_rotation_slider.addEventListener('touchend', release_slider, { passive: true });
 }
+
+if (mobile_rotation_pad) {
+  const set_rotation_from_event = (event) => {
+    const point = event.touches && event.touches.length ? event.touches[0] : event;
+    mobile_rotation_input = mobile_pointer_to_zone(point.clientX);
+    update_mobile_rotation_pad_visual();
+    event.preventDefault();
+  };
+
+  const release_rotation = (event) => {
+    reset_mobile_rotation();
+    if (event) event.preventDefault();
+  };
+
+  mobile_rotation_pad.addEventListener('pointerdown', set_rotation_from_event);
+  mobile_rotation_pad.addEventListener('pointermove', (event) => {
+    if (event.buttons || event.pointerType === 'touch') set_rotation_from_event(event);
+  });
+  mobile_rotation_pad.addEventListener('pointerup', release_rotation);
+  mobile_rotation_pad.addEventListener('pointercancel', release_rotation);
+  mobile_rotation_pad.addEventListener('pointerleave', release_rotation);
+  mobile_rotation_pad.addEventListener('touchstart', set_rotation_from_event, { passive: false });
+  mobile_rotation_pad.addEventListener('touchmove', set_rotation_from_event, { passive: false });
+  mobile_rotation_pad.addEventListener('touchend', release_rotation, { passive: false });
+}
+
 
 if (mobile_jump_button) {
   const press_jump = (event) => {
     initialize_audio();
     ensure_audio_running();
     if (state === 'start') reset_game();
-    else if (state === 'game_over') return_to_start_screen();
+    else if (state === 'game_over') reset_game();
     else keys.space = true;
     event.preventDefault();
   };
@@ -1524,10 +1590,12 @@ if (mobile_jump_button) {
   mobile_jump_button.addEventListener('touchend', release_jump, { passive: false });
 }
 
-window.addEventListener('resize', update_mobile_controls_visibility);
+window.addEventListener('resize', () => { update_mobile_controls_visibility(); resize_canvas_to_display(); });
+window.addEventListener('orientationchange', () => { setTimeout(() => { update_mobile_controls_visibility(); resize_canvas_to_display(); }, 120); });
 
 update_high_score_display();
 build_param_controls();
 update_mobile_controls_visibility();
+resize_canvas_to_display();
 draw();
 requestAnimationFrame(game_loop);

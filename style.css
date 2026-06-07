@@ -34,14 +34,17 @@ body.mobile-layout-active {
 
 #game-shell.mobile-layout {
   aspect-ratio: auto;
-  min-height: min(720px, calc(100dvh - 40px));
   display: flex;
   flex-direction: column;
+  height: auto;
+  overflow: visible;
 }
 
 #game-shell.mobile-layout #game-canvas {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
 }
 
 #game-canvas {
@@ -170,8 +173,17 @@ h2 {
 }
 
 #final-score {
-  font-size: 24px;
-  font-weight: 800;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.game-over-message {
+  margin: 4px 0 8px;
+  color: #dbeafe;
+  font-size: 18px;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .mobile-toggle-row {
@@ -209,11 +221,11 @@ h2 {
   left: auto;
   right: auto;
   bottom: auto;
-  flex: 0 0 176px;
+  flex: 0 0 auto;
   width: 100%;
-  padding: 22px 22px 24px;
-  background: linear-gradient(180deg, rgba(12, 29, 52, 0.98), rgba(7, 19, 36, 0.98));
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 26px 22px 28px;
+  background: #071324;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
 }
 
@@ -221,44 +233,55 @@ h2 {
   display: flex;
 }
 
-.mobile-slider-wrap {
-  width: min(62vw, 620px);
-  padding: 16px 18px 18px;
+.mobile-rotation-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(68vw, 720px);
+  min-height: 156px;
   border: 1px solid rgba(226, 232, 240, 0.18);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
   pointer-events: auto;
   touch-action: none;
+  user-select: none;
 }
 
-.mobile-label {
-  display: block;
-  margin-bottom: 10px;
-  color: #dbeafe;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+.rotation-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e0f2fe;
+  font-size: 42px;
+  font-weight: 900;
+  border-right: 1px solid rgba(226, 232, 240, 0.14);
+  transition: background 0.08s ease, transform 0.08s ease;
 }
 
-.mobile-slider {
-  width: 100%;
-  height: 48px;
-  accent-color: #e0f2fe;
-  cursor: pointer;
+.rotation-zone:last-child {
+  border-right: 0;
 }
-.mobile-slider::-webkit-slider-thumb {
-  width: 34px;
-  height: 34px;
+
+.rotation-neutral {
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 34px;
+}
+
+.mobile-rotation-pad.left-active .rotation-left,
+.mobile-rotation-pad.neutral-active .rotation-neutral,
+.mobile-rotation-pad.right-active .rotation-right {
+  background: rgba(125, 211, 252, 0.18);
+  transform: scale(0.985);
 }
 
 .mobile-jump-button {
-  width: 124px;
-  height: 124px;
+  width: 180px;
+  height: 156px;
   border: 1px solid rgba(226, 232, 240, 0.28);
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.08);
   color: #f8fafc;
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 900;
   letter-spacing: 0.05em;
   box-shadow: none;
@@ -276,20 +299,34 @@ h2 {
   body { padding: 0; }
   #game-shell {
     width: 100vw;
-    height: 100dvh;
-    aspect-ratio: auto;
+    aspect-ratio: 16 / 9;
     border-radius: 0;
   }
+  body.mobile-layout-active #game-shell {
+    width: 100vw;
+    height: auto;
+    min-height: 0;
+  }
+  body.mobile-layout-active {
+    min-height: 100dvh;
+    background: #071324;
+  }
   #game-shell.mobile-layout #game-canvas {
-    flex: 1 1 calc(100dvh - 184px);
+    width: 100vw;
+    aspect-ratio: 16 / 9;
     height: auto;
   }
   .param-grid { grid-template-columns: 1fr; }
   h1 { font-size: 28px; }
   .panel { padding: 22px; }
-  #game-shell.mobile-layout .mobile-controls { flex-basis: 184px; padding: 22px 16px 24px; }
-  .mobile-jump-button { width: 124px; height: 124px; font-size: 20px; border-radius: 28px; }
-  .mobile-slider-wrap { width: min(62vw, 620px); padding: 16px 18px 18px; }
+  #game-shell.mobile-layout .mobile-controls {
+    min-height: min(42dvh, 260px);
+    padding: 26px 18px max(28px, env(safe-area-inset-bottom));
+    gap: 18px;
+  }
+  .mobile-jump-button { width: 174px; height: 164px; font-size: 25px; border-radius: 28px; }
+  .mobile-rotation-pad { width: min(62vw, 640px); min-height: 164px; }
+  .rotation-zone { font-size: 40px; }
 }
 
 @media (pointer: coarse) {
