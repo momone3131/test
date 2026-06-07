@@ -332,3 +332,103 @@ h2 {
 @media (pointer: coarse) {
   .mobile-controls.visible { display: flex; }
 }
+
+/* v21 mobile viewport fix: keep start/game-over panels from being clipped by the 16:9 game canvas area. */
+@media (max-width: 720px) {
+  html, body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  body {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0;
+    background: #071324;
+  }
+
+  #game-shell {
+    width: 100vw;
+    max-width: 100vw;
+    aspect-ratio: auto;
+    min-height: 100dvh;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  #game-canvas {
+    width: 100vw;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(18px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+  }
+
+  .overlay.visible {
+    display: flex;
+  }
+
+  .panel,
+  .start-panel,
+  .small-panel {
+    width: min(92vw, 520px);
+    max-height: none;
+    margin: 0 auto;
+    padding: 22px 20px;
+    border-radius: 22px;
+  }
+
+  .start-panel h1,
+  .small-panel h1 {
+    font-size: 34px;
+  }
+
+  .subtitle {
+    margin-bottom: 8px;
+    font-size: 16px;
+  }
+
+  .high-score-text {
+    margin: 8px 0 0;
+    font-size: 19px;
+  }
+
+  .mobile-toggle-row {
+    margin-top: 14px;
+    font-size: 16px;
+  }
+
+  .primary-button {
+    width: 100%;
+    padding: 15px 22px;
+    font-size: 19px;
+  }
+
+  .shortcut-hint {
+    margin-top: 9px;
+    font-size: 13px;
+  }
+
+  #game-shell.mobile-layout {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #game-shell.mobile-layout #game-canvas {
+    flex: 0 0 auto;
+    width: 100vw;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
