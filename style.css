@@ -644,3 +644,16 @@ h2 {
     gap: 14px !important;
   }
 }
+
+
+/* v35: mobile view extends the playable canvas downward by 1.2x and fills it with in-game terrain; no zoom/crop. */
+@media (max-width: 720px), (pointer: coarse) {
+  body.mobile-layout-active #game-shell.mobile-layout #game-canvas,
+  #game-shell.mobile-layout #game-canvas {
+    width: var(--mobile-canvas-width, 100vw) !important;
+    height: var(--mobile-canvas-height, calc(100vw * 648 / 554)) !important;
+    aspect-ratio: 554 / 648 !important;
+    object-fit: fill !important;
+    background: #86c9ff !important;
+  }
+}

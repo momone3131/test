@@ -1,7 +1,7 @@
 'use strict';
 
-const APP_VERSION = 'v34';
-const MOBILE_WORLD_ZOOM = 1.16;
+const APP_VERSION = 'v35';
+const MOBILE_WORLD_ZOOM = 1;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -145,7 +145,7 @@ function is_mobile_layout_enabled() {
 function resize_canvas_to_display() {
   const mobile_layout_enabled = is_mobile_layout_enabled();
   const target_width = mobile_layout_enabled ? 554 : 960;
-  const target_height = 540;
+  const target_height = mobile_layout_enabled ? 648 : 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
 
