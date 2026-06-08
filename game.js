@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 const MOBILE_WORLD_ZOOM = 1;
 
 const canvas = document.getElementById('game-canvas');
@@ -246,7 +246,8 @@ function update_high_score() {
     high_score = score;
     try { localStorage.setItem('ip_runner_high_score', String(high_score)); } catch (_) {}
   }
-  update_high_score_display();
+  update_version_labels();
+update_high_score_display();
 }
 
 function get_difficulty_level() {
@@ -1538,7 +1539,8 @@ function end_game() {
 }
 
 function return_to_start_screen() {
-  update_high_score_display();
+  update_version_labels();
+update_high_score_display();
   state = 'start';
   update_mobile_controls_visibility();
   reset_mobile_rotation();
@@ -1669,6 +1671,7 @@ if (mobile_jump_button) {
 window.addEventListener('resize', () => { update_mobile_controls_visibility(); resize_canvas_to_display(); });
 window.addEventListener('orientationchange', () => { setTimeout(() => { update_mobile_controls_visibility(); resize_canvas_to_display(); }, 120); });
 
+update_version_labels();
 update_high_score_display();
 build_param_controls();
 update_mobile_controls_visibility();
