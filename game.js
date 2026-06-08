@@ -1,5 +1,7 @@
 'use strict';
 
+const APP_VERSION = 'v27';
+
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -141,6 +143,30 @@ function resize_canvas_to_display() {
   const target_height = mobile_layout_enabled ? 692 : 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
+
+  const game_shell = document.getElementById('game-shell');
+  if (mobile_layout_enabled) {
+    const viewport_width = Math.min(window.innerWidth || target_width, document.documentElement.clientWidth || target_width);
+    const display_width = Math.max(320, viewport_width);
+    const display_height = Math.round(display_width * target_height / target_width);
+    canvas.style.width = `${display_width}px`;
+    canvas.style.height = `${display_height}px`;
+    canvas.style.aspectRatio = `${target_width} / ${target_height}`;
+    if (game_shell) {
+      game_shell.style.width = `${display_width}px`;
+      game_shell.style.height = 'auto';
+      game_shell.style.aspectRatio = 'auto';
+    }
+  } else {
+    canvas.style.width = '';
+    canvas.style.height = '';
+    canvas.style.aspectRatio = '';
+    if (game_shell) {
+      game_shell.style.width = '';
+      game_shell.style.height = '';
+      game_shell.style.aspectRatio = '';
+    }
+  }
 }
 
 function mobile_pointer_to_zone(client_x) {
@@ -190,6 +216,11 @@ function sync_mobile_toggles(source = null) {
 
   if (mobile_mode_toggle) mobile_mode_toggle.checked = mobile_mode_enabled;
   if (game_over_mobile_mode_toggle) game_over_mobile_mode_toggle.checked = mobile_mode_enabled;
+}
+
+
+function update_version_labels() {
+  document.querySelectorAll('.version-label').forEach((el) => { el.textContent = APP_VERSION; });
 }
 
 function update_high_score_display() {

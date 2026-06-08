@@ -448,3 +448,44 @@ h2 {
     object-fit: contain;
   }
 }
+
+
+.version-label {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.62);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.panel {
+  position: relative;
+}
+
+/* v27 mobile aspect hard fix: the displayed canvas size is also set by JS; this CSS prevents old 16:9 rules from winning. */
+@media (max-width: 720px), (pointer: coarse) {
+  body.mobile-layout-active #game-shell,
+  body.mobile-layout-active #game-shell.mobile-layout,
+  #game-shell.mobile-layout {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    min-height: 100dvh;
+    aspect-ratio: auto !important;
+    overflow: visible !important;
+  }
+
+  body.mobile-layout-active #game-shell.mobile-layout #game-canvas,
+  #game-shell.mobile-layout #game-canvas {
+    display: block !important;
+    width: 100vw !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    object-fit: fill !important;
+  }
+}
