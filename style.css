@@ -314,8 +314,9 @@ h2 {
   }
   #game-shell.mobile-layout #game-canvas {
     width: 100vw;
-    aspect-ratio: 16 / 9;
-    height: auto;
+    height: calc(100vw * 692 / 820);
+    max-height: 62dvh;
+    aspect-ratio: 820 / 692;
   }
   .param-grid { grid-template-columns: 1fr; }
   h1 { font-size: 28px; }
@@ -360,8 +361,9 @@ h2 {
 
   #game-canvas {
     width: 100vw;
-    height: auto;
-    aspect-ratio: 16 / 9;
+    height: calc(100vw * 692 / 820);
+    max-height: 62dvh;
+    aspect-ratio: 820 / 692;
   }
 
   .overlay {
@@ -429,7 +431,20 @@ h2 {
   #game-shell.mobile-layout #game-canvas {
     flex: 0 0 auto;
     width: 100vw;
-    height: auto;
-    aspect-ratio: 16 / 9;
+    height: calc(100vw * 692 / 820);
+    max-height: 62dvh;
+    aspect-ratio: 820 / 692;
+  }
+}
+
+
+/* v26: mobile canvas uses matching intrinsic/display ratio, no vertical squeezing. */
+@media (max-width: 720px), (pointer: coarse) {
+  body.mobile-layout-active #game-shell.mobile-layout #game-canvas {
+    width: 100vw !important;
+    height: calc(100vw * 692 / 820) !important;
+    max-height: 62dvh !important;
+    aspect-ratio: 820 / 692 !important;
+    object-fit: contain;
   }
 }
