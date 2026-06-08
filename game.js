@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -140,24 +140,40 @@ function has_coarse_pointer() {
 function resize_canvas_to_display() {
   const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
   const target_width = mobile_layout_enabled ? 820 : 960;
-  const target_height = mobile_layout_enabled ? 692 : 540;
+  const target_height = mobile_layout_enabled ? 900 : 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
 
   const game_shell = document.getElementById('game-shell');
   if (mobile_layout_enabled) {
     const viewport_width = Math.min(window.innerWidth || target_width, document.documentElement.clientWidth || target_width);
-    const display_width = Math.max(320, viewport_width);
-    const display_height = Math.round(display_width * target_height / target_width);
+    const viewport_height = Math.min(window.innerHeight || 900, document.documentElement.clientHeight || 900);
+    const controls_height = mobile_controls && mobile_controls.classList.contains('visible')
+      ? Math.max(210, Math.round(mobile_controls.getBoundingClientRect().height || 220))
+      : 0;
+    const vertical_padding = 10;
+    const max_canvas_height = Math.max(360, viewport_height - controls_height - vertical_padding);
+    const natural_width = Math.max(320, viewport_width);
+    const natural_height = Math.round(natural_width * target_height / target_width);
+    let display_width = natural_width;
+    let display_height = natural_height;
+    if (natural_height > max_canvas_height) {
+      display_height = max_canvas_height;
+      display_width = Math.round(display_height * target_width / target_height);
+    }
+    document.documentElement.style.setProperty('--mobile-canvas-width', `${display_width}px`);
+    document.documentElement.style.setProperty('--mobile-canvas-height', `${display_height}px`);
     canvas.style.width = `${display_width}px`;
     canvas.style.height = `${display_height}px`;
     canvas.style.aspectRatio = `${target_width} / ${target_height}`;
     if (game_shell) {
       game_shell.style.width = `${display_width}px`;
-      game_shell.style.height = 'auto';
+      game_shell.style.height = '100dvh';
       game_shell.style.aspectRatio = 'auto';
     }
   } else {
+    document.documentElement.style.removeProperty('--mobile-canvas-width');
+    document.documentElement.style.removeProperty('--mobile-canvas-height');
     canvas.style.width = '';
     canvas.style.height = '';
     canvas.style.aspectRatio = '';
