@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -143,7 +143,7 @@ function is_mobile_layout_enabled() {
 
 function resize_canvas_to_display() {
   const mobile_layout_enabled = is_mobile_layout_enabled();
-  const target_width = mobile_layout_enabled ? 720 : 960;
+  const target_width = mobile_layout_enabled ? 554 : 960;
   const target_height = 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
@@ -155,6 +155,8 @@ function resize_canvas_to_display() {
     const display_height = Math.round(display_width * target_height / target_width);
     document.documentElement.style.setProperty('--mobile-canvas-width', `${display_width}px`);
     document.documentElement.style.setProperty('--mobile-canvas-height', `${display_height}px`);
+    document.documentElement.style.setProperty('--mobile-canvas-ratio-width', `${target_width}`);
+    document.documentElement.style.setProperty('--mobile-canvas-ratio-height', `${target_height}`);
     canvas.style.width = `${display_width}px`;
     canvas.style.height = `${display_height}px`;
     canvas.style.aspectRatio = `${target_width} / ${target_height}`;
@@ -166,6 +168,8 @@ function resize_canvas_to_display() {
   } else {
     document.documentElement.style.removeProperty('--mobile-canvas-width');
     document.documentElement.style.removeProperty('--mobile-canvas-height');
+    document.documentElement.style.removeProperty('--mobile-canvas-ratio-width');
+    document.documentElement.style.removeProperty('--mobile-canvas-ratio-height');
     canvas.style.width = '';
     canvas.style.height = '';
     canvas.style.aspectRatio = '';

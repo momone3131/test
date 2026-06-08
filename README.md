@@ -1,6 +1,8 @@
-# 외발 펭귄 PWA 배포 메모
+# 외발 펭귄 PWA 배포 안내
 
-GitHub Pages에 올릴 때 저장소 루트에 아래 파일/폴더가 있어야 합니다.
+이 폴더의 파일 전체를 GitHub Pages 같은 정적 웹호스팅 저장소 루트에 업로드하세요.
+
+필수 구조:
 
 ```text
 index.html
@@ -8,25 +10,15 @@ style.css
 game.js
 manifest.webmanifest
 service-worker.js
-README_PWA_DEPLOY.md
 assets/
 ```
 
-배포 URL 예시:
+GitHub Pages URL 예:
 
 ```text
-https://momone3131.github.io/test/
+https://momone3131.github.io/test/?v=33
 ```
 
-아이폰에서 실행:
+iPhone에서는 Safari로 접속한 뒤 공유 버튼 → 홈 화면에 추가를 사용하면 됩니다.
 
-1. Safari로 GitHub Pages URL 접속
-2. 공유 버튼 선택
-3. 홈 화면에 추가
-4. 홈 화면 아이콘으로 실행
-
-주의:
-
-- `github.com/...` 주소가 아니라 `github.io/...` 주소로 접속해야 게임이 실행됩니다.
-- 이전 버전이 캐시에 남아 있으면 Safari 새로고침 또는 홈 화면 아이콘 삭제 후 재추가가 필요할 수 있습니다.
-- iOS 사운드는 첫 터치 이후 재생됩니다.
+캐시가 남으면 URL 뒤의 `?v=33` 값을 바꾸거나 홈 화면 아이콘을 삭제 후 다시 추가하세요.
