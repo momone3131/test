@@ -30,6 +30,7 @@ body {
 
 body.mobile-layout-active {
   align-items: flex-start;
+  padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
 }
 
 #game-shell.mobile-layout {
@@ -43,7 +44,7 @@ body.mobile-layout-active {
 #game-shell.mobile-layout #game-canvas {
   flex: 0 0 auto;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 820 / 692;
   height: auto;
 }
 

@@ -62,7 +62,7 @@ const input_elements = new Map();
 const POGO_LINE_WIDTH = 10;
 const POGO_HALF_WIDTH = POGO_LINE_WIDTH * 0.5;
 const FOOT_SAFE_LENGTH = 18;
-const PIT_BOTTOM_Y = canvas.height + 120;
+function pit_bottom_y() { return canvas.height + 120; }
 
 const penguin_sprite = new Image();
 let penguin_sprite_loaded = false;
@@ -136,10 +136,11 @@ function has_coarse_pointer() {
 }
 
 function resize_canvas_to_display() {
-  // Keep the game world at a fixed 16:9 canvas resolution.
-  // CSS controls the displayed size to avoid mobile aspect-ratio distortion.
-  if (canvas.width !== 960) canvas.width = 960;
-  if (canvas.height !== 540) canvas.height = 540;
+  const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
+  const target_width = mobile_layout_enabled ? 820 : 960;
+  const target_height = mobile_layout_enabled ? 692 : 540;
+  if (canvas.width !== target_width) canvas.width = target_width;
+  if (canvas.height !== target_height) canvas.height = target_height;
 }
 
 function mobile_pointer_to_zone(client_x) {
@@ -910,7 +911,7 @@ function check_collisions() {
     return true;
   }
 
-  if (player.body_y > PIT_BOTTOM_Y || player.body_y < -900 || player.body_x < camera_x - 400) {
+  if (player.body_y > pit_bottom_y() || player.body_y < -900 || player.body_x < camera_x - 400) {
     game_over_reason = '하얀 바람 속으로 멀어졌습니다.';
     return true;
   }
