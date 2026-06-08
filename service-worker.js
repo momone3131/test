@@ -1,4 +1,4 @@
-const CACHE_NAME = 'one-legged-penguin-v29';
+const CACHE_NAME = 'one-legged-penguin-v30';
 const ASSETS = [
   './',
   './index.html',

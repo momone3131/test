@@ -45,7 +45,7 @@ body.mobile-layout-active {
 #game-shell.mobile-layout #game-canvas {
   flex: 0 0 auto;
   width: 100%;
-  aspect-ratio: 820 / 900;
+  aspect-ratio: 720 / 540;
   height: auto;
 }
 
@@ -315,9 +315,9 @@ h2 {
   }
   #game-shell.mobile-layout #game-canvas {
     width: 100vw;
-    height: calc(100vw * 900 / 820);
+    height: calc(100vw * 540 / 720);
     max-height: none;
-    aspect-ratio: 820 / 900;
+    aspect-ratio: 720 / 540;
   }
   .param-grid { grid-template-columns: 1fr; }
   h1 { font-size: 28px; }
@@ -362,9 +362,9 @@ h2 {
 
   #game-canvas {
     width: 100vw;
-    height: calc(100vw * 900 / 820);
+    height: calc(100vw * 540 / 720);
     max-height: none;
-    aspect-ratio: 820 / 900;
+    aspect-ratio: 720 / 540;
   }
 
   .overlay {
@@ -432,9 +432,9 @@ h2 {
   #game-shell.mobile-layout #game-canvas {
     flex: 0 0 auto;
     width: 100vw;
-    height: calc(100vw * 900 / 820);
+    height: calc(100vw * 540 / 720);
     max-height: none;
-    aspect-ratio: 820 / 900;
+    aspect-ratio: 720 / 540;
   }
 }
 
@@ -443,9 +443,9 @@ h2 {
 @media (max-width: 720px), (pointer: coarse) {
   body.mobile-layout-active #game-shell.mobile-layout #game-canvas {
     width: 100vw !important;
-    height: calc(100vw * 900 / 820) !important;
+    height: calc(100vw * 540 / 720) !important;
     max-height: 62dvh !important;
-    aspect-ratio: 820 / 900 !important;
+    aspect-ratio: 720 / 540 !important;
     object-fit: contain;
   }
 }
@@ -527,10 +527,10 @@ h2 {
   #game-shell.mobile-layout #game-canvas {
     display: block !important;
     width: var(--mobile-canvas-width, 100vw) !important;
-    height: var(--mobile-canvas-height, calc(100vw * 900 / 820)) !important;
+    height: var(--mobile-canvas-height, calc(100vw * 540 / 720)) !important;
     min-height: 0 !important;
     max-height: none !important;
-    aspect-ratio: 820 / 900 !important;
+    aspect-ratio: 720 / 540 !important;
     object-fit: contain !important;
     flex: 0 0 auto !important;
   }
@@ -553,5 +553,35 @@ h2 {
   .mobile-jump-button {
     width: 160px !important;
     height: 150px !important;
+  }
+}
+
+
+/* v30: mobile canvas fills phone width while keeping a zoomed-in 4:3 game view. */
+@media (max-width: 720px), (pointer: coarse) {
+  body.mobile-layout-active #game-shell,
+  body.mobile-layout-active #game-shell.mobile-layout,
+  #game-shell.mobile-layout {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.mobile-layout-active #game-shell.mobile-layout #game-canvas,
+  #game-shell.mobile-layout #game-canvas {
+    width: 100vw !important;
+    height: calc(100vw * 540 / 720) !important;
+    max-width: 100vw !important;
+    aspect-ratio: 720 / 540 !important;
+    object-fit: contain !important;
+    flex: 0 0 auto !important;
+  }
+
+  #game-shell.mobile-layout .mobile-controls {
+    width: 100vw !important;
+    max-width: 100vw !important;
   }
 }

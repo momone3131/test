@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v29';
+const APP_VERSION = 'v30';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -139,7 +139,7 @@ function has_coarse_pointer() {
 
 function resize_canvas_to_display() {
   const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
-  const target_width = mobile_layout_enabled ? 492 : 960;
+  const target_width = mobile_layout_enabled ? 720 : 960;
   const target_height = 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
@@ -147,20 +147,8 @@ function resize_canvas_to_display() {
   const game_shell = document.getElementById('game-shell');
   if (mobile_layout_enabled) {
     const viewport_width = Math.min(window.innerWidth || target_width, document.documentElement.clientWidth || target_width);
-    const viewport_height = Math.min(window.innerHeight || 900, document.documentElement.clientHeight || 900);
-    const controls_height = mobile_controls && mobile_controls.classList.contains('visible')
-      ? Math.max(210, Math.round(mobile_controls.getBoundingClientRect().height || 220))
-      : 0;
-    const vertical_padding = 10;
-    const max_canvas_height = Math.max(360, viewport_height - controls_height - vertical_padding);
-    const natural_width = Math.max(320, viewport_width);
-    const natural_height = Math.round(natural_width * target_height / target_width);
-    let display_width = natural_width;
-    let display_height = natural_height;
-    if (natural_height > max_canvas_height) {
-      display_height = max_canvas_height;
-      display_width = Math.round(display_height * target_width / target_height);
-    }
+    const display_width = Math.max(320, viewport_width);
+    const display_height = Math.round(display_width * target_height / target_width);
     document.documentElement.style.setProperty('--mobile-canvas-width', `${display_width}px`);
     document.documentElement.style.setProperty('--mobile-canvas-height', `${display_height}px`);
     canvas.style.width = `${display_width}px`;
