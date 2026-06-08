@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -139,8 +139,8 @@ function has_coarse_pointer() {
 
 function resize_canvas_to_display() {
   const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
-  const target_width = mobile_layout_enabled ? 820 : 960;
-  const target_height = mobile_layout_enabled ? 900 : 540;
+  const target_width = mobile_layout_enabled ? 492 : 960;
+  const target_height = 540;
   if (canvas.width !== target_width) canvas.width = target_width;
   if (canvas.height !== target_height) canvas.height = target_height;
 
