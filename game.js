@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v32';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -137,8 +137,12 @@ function has_coarse_pointer() {
   return window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 }
 
+function is_mobile_layout_enabled() {
+  return mobile_mode_enabled || has_coarse_pointer();
+}
+
 function resize_canvas_to_display() {
-  const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
+  const mobile_layout_enabled = is_mobile_layout_enabled();
   const target_width = mobile_layout_enabled ? 720 : 960;
   const target_height = 540;
   if (canvas.width !== target_width) canvas.width = target_width;
@@ -197,7 +201,7 @@ function get_rotation_control() {
 }
 
 function update_mobile_controls_visibility() {
-  const mobile_layout_enabled = mobile_mode_enabled || has_coarse_pointer();
+  const mobile_layout_enabled = is_mobile_layout_enabled();
   const should_show = state === 'playing' && mobile_layout_enabled;
   const game_shell = document.getElementById('game-shell');
   if (mobile_controls) mobile_controls.classList.toggle('visible', should_show);
@@ -1352,16 +1356,23 @@ function draw_polar_bear_intro() {
   if (!polar_bear || !polar_bear.active || polar_bear.banner_timer <= 0) return;
   const t = polar_bear.banner_timer;
   const alpha = t > 2.1 ? (2.8 - t) / 0.7 : Math.min(1, t / 0.8);
+  const mobile = is_mobile_layout_enabled();
+  const box_width = mobile ? Math.min(canvas.width - 42, 640) : 420;
+  const box_height = mobile ? 64 : 48;
+  const box_x = canvas.width * 0.5 - box_width * 0.5;
+  const box_y = mobile ? 76 : 84;
   ctx.save();
   ctx.globalAlpha = clamp(alpha, 0, 1) * 0.95;
   ctx.fillStyle = 'rgba(8, 23, 45, 0.66)';
   ctx.beginPath();
-  ctx.roundRect(canvas.width * 0.5 - 210, 84, 420, 48, 18);
+  ctx.roundRect(box_x, box_y, box_width, box_height, mobile ? 22 : 18);
   ctx.fill();
   ctx.fillStyle = '#f8fafc';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = mobile ? 'bold 25px Arial' : 'bold 18px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('어느새, 하얀 발걸음이 뒤를 잇습니다.', canvas.width * 0.5, 114);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('어느새, 하얀 발걸음이 뒤를 잇습니다.', canvas.width * 0.5, box_y + box_height * 0.5 + 1);
+  ctx.textBaseline = 'alphabetic';
   ctx.restore();
 }
 
@@ -1438,17 +1449,26 @@ function draw_player() {
 }
 
 function draw_hud() {
+  const mobile = is_mobile_layout_enabled();
+  const panel_w = mobile ? 248 : 183;
+  const panel_h = mobile ? 86 : 64;
+  const panel_x = canvas.width - panel_w - (mobile ? 18 : 22);
+  const panel_y = mobile ? 16 : 18;
+  const score_font = mobile ? 34 : 24;
+  const best_font = mobile ? 20 : 14;
+  const right_x = canvas.width - (mobile ? 34 : 36);
+
   ctx.fillStyle = 'rgba(8, 23, 45, 0.72)';
   ctx.beginPath();
-  ctx.roundRect(canvas.width - 205, 18, 183, 64, 16);
+  ctx.roundRect(panel_x, panel_y, panel_w, panel_h, mobile ? 22 : 16);
   ctx.fill();
   ctx.fillStyle = '#f8fafc';
-  ctx.font = 'bold 24px Arial';
+  ctx.font = `bold ${score_font}px Arial`;
   ctx.textAlign = 'right';
-  ctx.fillText(`Score ${score}`, canvas.width - 36, 47);
-  ctx.font = 'bold 14px Arial';
+  ctx.fillText(`Score ${score}`, right_x, panel_y + (mobile ? 39 : 29));
+  ctx.font = `bold ${best_font}px Arial`;
   ctx.fillStyle = '#bae6fd';
-  ctx.fillText(`Best ${high_score}`, canvas.width - 36, 68);
+  ctx.fillText(`Best ${high_score}`, right_x, panel_y + (mobile ? 68 : 50));
 }
 
 function draw_start_preview() {
