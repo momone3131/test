@@ -1,6 +1,7 @@
 'use strict';
 
-const APP_VERSION = 'v33';
+const APP_VERSION = 'v34';
+const MOBILE_WORLD_ZOOM = 1.16;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -1491,8 +1492,7 @@ function draw_start_preview() {
   ctx.restore();
 }
 
-function draw() {
-  resize_canvas_to_display();
+function draw_world_scene() {
   draw_background();
   draw_terrain();
   draw_obstacles();
@@ -1500,6 +1500,24 @@ function draw() {
   draw_sea_lions();
   if (player) draw_player();
   if (state === 'start') draw_start_preview();
+}
+
+function draw() {
+  resize_canvas_to_display();
+  const mobile_zoom = is_mobile_layout_enabled() ? MOBILE_WORLD_ZOOM : 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (mobile_zoom !== 1) {
+    ctx.save();
+    ctx.scale(mobile_zoom, mobile_zoom);
+    draw_world_scene();
+    ctx.restore();
+  } else {
+    draw_world_scene();
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (state === 'playing' && player) {
     draw_hud();
     draw_polar_bear_intro();
