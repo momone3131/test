@@ -22,7 +22,7 @@ const default_params = {
   gravity: 1450,
   leg_length: 120,
   body_radius: 28,
-  angular_accel: 5.6,
+  angular_accel: 7.28,
   pendulum_gravity_scale: 0.7,
   angular_damping_ground: 1.7,
   angular_damping_air: 0.14,
@@ -647,6 +647,7 @@ function polar_bear_collides() {
   const bear_body_cx = bear_x - polar_bear.width * 0.03;
   const bear_body_cy = bear_y - polar_bear.height * 0.45;
   const bear_r = polar_bear.height * 0.3;
+
   if (circle_circle_collision(player.body_x, player.body_y, params.body_radius * 0.94, bear_body_cx, bear_body_cy, bear_r)) {
     game_over_reason = '하얀 발걸음이 끝내 곁에 닿았습니다.';
     game_over_sound_kind = 'polar_bear';
@@ -737,7 +738,8 @@ function update_grounded_kinematics(dt) {
 
 function update_air_kinematics(dt) {
   const control = get_rotation_control();
-  player.omega += control * params.angular_accel * dt;
+  const air_stabilizing_accel = -3.0 * Math.sin(player.angle) - 0.35 * player.omega;
+  player.omega += (control * params.angular_accel + air_stabilizing_accel) * dt;
   player.omega -= player.omega * params.angular_damping_air * dt;
   player.omega = clamp(player.omega, -params.max_angular_speed, params.max_angular_speed);
   player.angle = normalize_angle(player.angle + player.omega * dt);
@@ -898,11 +900,7 @@ function check_collisions() {
     }
   }
 
-  if (pole_collides_with_world()) {
-    game_over_reason = '포고스틱이 눈 위에 조용히 누웠습니다.';
-    return true;
-  }
-
+  // 지형/고정 장애물에는 포고스틱이 닿아도 허용하고, 동물 캐릭터 접촉은 기존처럼 게임오버로 처리한다.
   if (sea_lion_collides()) return true;
   if (polar_bear_collides()) return true;
 
