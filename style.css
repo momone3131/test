@@ -204,6 +204,19 @@ h2 {
   accent-color: #38bdf8;
 }
 
+.hard-mode-toggle-row {
+  color: #fb923c;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.hard-mode-toggle-row input {
+  width: 28px;
+  height: 28px;
+  accent-color: #f97316;
+}
+
 .mobile-controls {
   position: absolute;
   left: 0;
@@ -650,4 +663,16 @@ h2 {
     object-fit: fill !important;
     background: #86c9ff !important;
   }
+}
+
+/* v40 hard mode toggle emphasis */
+.hard-mode-toggle-row {
+  color: #fb923c !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+.hard-mode-toggle-row input {
+  width: 28px !important;
+  height: 28px !important;
+  accent-color: #f97316 !important;
 }

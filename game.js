@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v39';
+const APP_VERSION = 'v41';
 const MOBILE_WORLD_ZOOM = 1;
 
 const canvas = document.getElementById('game-canvas');
@@ -18,8 +18,8 @@ const game_over_high_score = document.getElementById('game-over-high-score');
 const mobile_controls = document.getElementById('mobile-controls');
 const mobile_rotation_pad = document.getElementById('mobile-rotation-pad');
 const mobile_jump_button = document.getElementById('mobile-jump-button');
-const beginner_mode_toggle = document.getElementById('beginner-mode-toggle');
-const game_over_beginner_mode_toggle = document.getElementById('game-over-beginner-mode-toggle');
+const hard_mode_toggle = document.getElementById('hard-mode-toggle');
+const game_over_hard_mode_toggle = document.getElementById('game-over-hard-mode-toggle');
 
 const default_params = {
   gravity: 1450,
@@ -103,7 +103,7 @@ let state = 'start';
 let last_time = performance.now();
 let keys = { left: false, right: false, space: false };
 let mobile_rotation_input = 0;
-let beginner_mode_enabled = false;
+let hard_mode_enabled = false;
 let player;
 let camera_x = 0;
 let obstacles = [];
@@ -112,7 +112,7 @@ let sea_lions = [];
 let polar_bear = null;
 let score = 0;
 let normal_high_score = Number((() => { try { return localStorage.getItem('ip_runner_high_score') || '0'; } catch (_) { return '0'; } })());
-let beginner_high_score = Number((() => { try { return localStorage.getItem('ip_runner_beginner_high_score') || '0'; } catch (_) { return '0'; } })());
+let hard_high_score = Number((() => { try { return localStorage.getItem('ip_runner_hard_high_score') || '0'; } catch (_) { return '0'; } })());
 let difficulty_level = 0;
 let game_over_reason = '';
 let audio_context = null;
@@ -218,15 +218,15 @@ function reset_mobile_rotation() {
   update_mobile_rotation_pad_visual();
 }
 
-function sync_beginner_toggles(source = null) {
-  if (source === beginner_mode_toggle && beginner_mode_toggle) {
-    beginner_mode_enabled = beginner_mode_toggle.checked;
-  } else if (source === game_over_beginner_mode_toggle && game_over_beginner_mode_toggle) {
-    beginner_mode_enabled = game_over_beginner_mode_toggle.checked;
+function sync_hard_toggles(source = null) {
+  if (source === hard_mode_toggle && hard_mode_toggle) {
+    hard_mode_enabled = hard_mode_toggle.checked;
+  } else if (source === game_over_hard_mode_toggle && game_over_hard_mode_toggle) {
+    hard_mode_enabled = game_over_hard_mode_toggle.checked;
   }
 
-  if (beginner_mode_toggle) beginner_mode_toggle.checked = beginner_mode_enabled;
-  if (game_over_beginner_mode_toggle) game_over_beginner_mode_toggle.checked = beginner_mode_enabled;
+  if (hard_mode_toggle) hard_mode_toggle.checked = hard_mode_enabled;
+  if (game_over_hard_mode_toggle) game_over_hard_mode_toggle.checked = hard_mode_enabled;
   update_high_score_display();
 }
 
@@ -236,21 +236,21 @@ function update_version_labels() {
 }
 
 function get_current_high_score() {
-  return beginner_mode_enabled ? beginner_high_score : normal_high_score;
+  return hard_mode_enabled ? hard_high_score : normal_high_score;
 }
 
 function update_high_score_display() {
-  const label = beginner_mode_enabled ? 'Easy Best' : 'Best';
+  const label = hard_mode_enabled ? 'Hard Best' : 'Best';
   const current_best = get_current_high_score();
   if (start_high_score) start_high_score.textContent = `${label} ${current_best}`;
   if (game_over_high_score) game_over_high_score.textContent = `${label} ${current_best}`;
 }
 
 function update_high_score() {
-  if (beginner_mode_enabled) {
-    if (score > beginner_high_score) {
-      beginner_high_score = score;
-      try { localStorage.setItem('ip_runner_beginner_high_score', String(beginner_high_score)); } catch (_) {}
+  if (hard_mode_enabled) {
+    if (score > hard_high_score) {
+      hard_high_score = score;
+      try { localStorage.setItem('ip_runner_hard_high_score', String(hard_high_score)); } catch (_) {}
     }
   } else if (score > normal_high_score) {
     normal_high_score = score;
@@ -261,31 +261,31 @@ function update_high_score() {
 }
 
 function get_ground_gravity_scale() {
-  return beginner_mode_enabled ? params.pendulum_gravity_scale * 0.48 : params.pendulum_gravity_scale;
+  return hard_mode_enabled ? params.pendulum_gravity_scale : params.pendulum_gravity_scale * 0.48;
 }
 
 function get_ground_damping() {
-  return beginner_mode_enabled ? params.angular_damping_ground * 1.65 : params.angular_damping_ground;
+  return hard_mode_enabled ? params.angular_damping_ground : params.angular_damping_ground * 1.65;
 }
 
 function get_air_damping() {
-  return beginner_mode_enabled ? params.angular_damping_air * 2.2 : params.angular_damping_air;
+  return hard_mode_enabled ? params.angular_damping_air : params.angular_damping_air * 2.2;
 }
 
 function get_lateral_air_drag() {
-  return beginner_mode_enabled ? params.lateral_air_drag * 1.7 : params.lateral_air_drag;
+  return hard_mode_enabled ? params.lateral_air_drag : params.lateral_air_drag * 1.7;
 }
 
 function get_air_stabilizing_accel() {
-  return beginner_mode_enabled ? 4.8 : 3.0;
+  return hard_mode_enabled ? 3.0 : 4.8;
 }
 
 function get_air_stabilizing_damping() {
-  return beginner_mode_enabled ? 0.55 : 0.35;
+  return hard_mode_enabled ? 0.35 : 0.55;
 }
 
 function get_pit_spacing_multiplier() {
-  return beginner_mode_enabled ? 1.65 : 1;
+  return hard_mode_enabled ? 1 : 1.65;
 }
 
 
@@ -328,23 +328,36 @@ function initialize_audio() {
   return audio_context;
 }
 
+function prime_audio_immediately(ctx) {
+  if (!ctx || audio_unlocked) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    gain.gain.setValueAtTime(0.0015, now);
+    gain.gain.linearRampToValueAtTime(0.0001, now + 0.045);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.05);
+    audio_unlocked = true;
+  } catch (_) {}
+}
+
 function activate_audio_from_user_gesture() {
   const ctx = initialize_audio();
   if (!ctx) return Promise.resolve(null);
 
+  try {
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    prime_audio_immediately(ctx);
+  } catch (_) {}
+
   const resume_promise = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
   return resume_promise.then(() => {
-    if (!audio_unlocked) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.00001, ctx.currentTime);
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.025);
-      audio_unlocked = true;
-    }
+    prime_audio_immediately(ctx);
     return ctx;
   }).catch(() => ctx);
 }
@@ -357,7 +370,12 @@ function ensure_audio_running() {
 
 function play_tone(type, frequency, duration, volume, ramp = 'exp') {
   if (!audio_enabled || !audio_context) return;
-  ensure_audio_running();
+  if (audio_context.state === 'suspended') {
+    audio_context.resume()
+      .then(() => play_tone(type, frequency, duration, volume, ramp))
+      .catch(() => {});
+    return;
+  }
   const now = audio_context.currentTime;
   const osc = audio_context.createOscillator();
   const gain = audio_context.createGain();
@@ -486,12 +504,11 @@ function read_params_from_ui() {
 }
 
 function reset_game() {
-  sync_beginner_toggles();
+  sync_hard_toggles();
   read_params_from_ui();
-  activate_audio_from_user_gesture().then(() => {
-    start_bgm();
-    play_start_sound();
-  });
+  activate_audio_from_user_gesture();
+  start_bgm();
+  play_start_sound();
 
   const foot_x = 90;
   const foot_y = ground_y_at(foot_x);
@@ -1538,13 +1555,13 @@ function draw_hud() {
   ctx.fillText(`Score ${score}`, right_x, panel_y + (mobile ? 39 : 29));
   ctx.font = `bold ${best_font}px Arial`;
   ctx.fillStyle = '#bae6fd';
-  ctx.fillText(`${beginner_mode_enabled ? 'Easy ' : 'Best '}${get_current_high_score()}`, right_x, panel_y + (mobile ? 68 : 50));
+  ctx.fillText(`${hard_mode_enabled ? 'Hard ' : 'Best '}${get_current_high_score()}`, right_x, panel_y + (mobile ? 68 : 50));
 
-  if (beginner_mode_enabled) {
+  if (hard_mode_enabled) {
     ctx.textAlign = 'left';
     ctx.font = mobile ? 'bold 18px Arial' : 'bold 13px Arial';
     ctx.fillStyle = 'rgba(248, 250, 252, 0.42)';
-    ctx.fillText('EASY MODE', mobile ? 18 : 20, mobile ? 28 : 116);
+    ctx.fillText('HARD MODE', mobile ? 18 : 20, mobile ? 28 : 116);
   }
 }
 
@@ -1605,7 +1622,7 @@ function end_game() {
   else play_game_over_sound();
   if (final_score) final_score.textContent = `Score: ${score}`;
   if (game_over_message) game_over_message.textContent = game_over_reason;
-  sync_beginner_toggles();
+  sync_hard_toggles();
   game_over_screen.classList.add('visible');
 }
 
@@ -1665,23 +1682,25 @@ window.addEventListener('keyup', (event) => {
 });
 
 start_button.addEventListener('click', () => {
-  activate_audio_from_user_gesture().then(() => reset_game());
+  activate_audio_from_user_gesture();
+  reset_game();
 });
 return_button.addEventListener('click', () => {
-  activate_audio_from_user_gesture().then(() => reset_game());
+  activate_audio_from_user_gesture();
+  reset_game();
 });
 
 
-if (beginner_mode_toggle) {
-  beginner_mode_toggle.addEventListener('change', () => {
-    sync_beginner_toggles(beginner_mode_toggle);
+if (hard_mode_toggle) {
+  hard_mode_toggle.addEventListener('change', () => {
+    sync_hard_toggles(hard_mode_toggle);
     update_mobile_controls_visibility();
   });
 }
 
-if (game_over_beginner_mode_toggle) {
-  game_over_beginner_mode_toggle.addEventListener('change', () => {
-    sync_beginner_toggles(game_over_beginner_mode_toggle);
+if (game_over_hard_mode_toggle) {
+  game_over_hard_mode_toggle.addEventListener('change', () => {
+    sync_hard_toggles(game_over_hard_mode_toggle);
     update_mobile_controls_visibility();
   });
 }
