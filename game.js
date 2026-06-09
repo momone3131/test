@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v39';
 const MOBILE_WORLD_ZOOM = 1;
 
 const canvas = document.getElementById('game-canvas');
@@ -18,8 +18,8 @@ const game_over_high_score = document.getElementById('game-over-high-score');
 const mobile_controls = document.getElementById('mobile-controls');
 const mobile_rotation_pad = document.getElementById('mobile-rotation-pad');
 const mobile_jump_button = document.getElementById('mobile-jump-button');
-const mobile_mode_toggle = document.getElementById('mobile-mode-toggle');
-const game_over_mobile_mode_toggle = document.getElementById('game-over-mobile-mode-toggle');
+const beginner_mode_toggle = document.getElementById('beginner-mode-toggle');
+const game_over_beginner_mode_toggle = document.getElementById('game-over-beginner-mode-toggle');
 
 const default_params = {
   gravity: 1450,
@@ -103,7 +103,7 @@ let state = 'start';
 let last_time = performance.now();
 let keys = { left: false, right: false, space: false };
 let mobile_rotation_input = 0;
-let mobile_mode_enabled = false;
+let beginner_mode_enabled = false;
 let player;
 let camera_x = 0;
 let obstacles = [];
@@ -111,11 +111,13 @@ let pits = [];
 let sea_lions = [];
 let polar_bear = null;
 let score = 0;
-let high_score = Number((() => { try { return localStorage.getItem('ip_runner_high_score') || '0'; } catch (_) { return '0'; } })());
+let normal_high_score = Number((() => { try { return localStorage.getItem('ip_runner_high_score') || '0'; } catch (_) { return '0'; } })());
+let beginner_high_score = Number((() => { try { return localStorage.getItem('ip_runner_beginner_high_score') || '0'; } catch (_) { return '0'; } })());
 let difficulty_level = 0;
 let game_over_reason = '';
 let audio_context = null;
 let audio_enabled = false;
+let audio_unlocked = false;
 let bgm_started = false;
 let bgm_step = 0;
 let bgm_timer = null;
@@ -139,7 +141,7 @@ function has_coarse_pointer() {
 }
 
 function is_mobile_layout_enabled() {
-  return mobile_mode_enabled || has_coarse_pointer();
+  return has_coarse_pointer();
 }
 
 function resize_canvas_to_display() {
@@ -187,16 +189,12 @@ function mobile_pointer_to_zone(client_x) {
   const rect = mobile_rotation_pad.getBoundingClientRect();
   if (rect.width <= 0) return 0;
   const local_x = clamp(client_x - rect.left, 0, rect.width);
-  const zone_width = rect.width / 3;
-  if (local_x < zone_width) return -1;
-  if (local_x > zone_width * 2) return 1;
-  return 0;
+  return local_x < rect.width * 0.5 ? -1 : 1;
 }
 
 function update_mobile_rotation_pad_visual() {
   if (!mobile_rotation_pad) return;
   mobile_rotation_pad.classList.toggle('left-active', mobile_rotation_input < 0);
-  mobile_rotation_pad.classList.toggle('neutral-active', mobile_rotation_input === 0);
   mobile_rotation_pad.classList.toggle('right-active', mobile_rotation_input > 0);
 }
 
@@ -220,15 +218,16 @@ function reset_mobile_rotation() {
   update_mobile_rotation_pad_visual();
 }
 
-function sync_mobile_toggles(source = null) {
-  if (source === mobile_mode_toggle && mobile_mode_toggle) {
-    mobile_mode_enabled = mobile_mode_toggle.checked;
-  } else if (source === game_over_mobile_mode_toggle && game_over_mobile_mode_toggle) {
-    mobile_mode_enabled = game_over_mobile_mode_toggle.checked;
+function sync_beginner_toggles(source = null) {
+  if (source === beginner_mode_toggle && beginner_mode_toggle) {
+    beginner_mode_enabled = beginner_mode_toggle.checked;
+  } else if (source === game_over_beginner_mode_toggle && game_over_beginner_mode_toggle) {
+    beginner_mode_enabled = game_over_beginner_mode_toggle.checked;
   }
 
-  if (mobile_mode_toggle) mobile_mode_toggle.checked = mobile_mode_enabled;
-  if (game_over_mobile_mode_toggle) game_over_mobile_mode_toggle.checked = mobile_mode_enabled;
+  if (beginner_mode_toggle) beginner_mode_toggle.checked = beginner_mode_enabled;
+  if (game_over_beginner_mode_toggle) game_over_beginner_mode_toggle.checked = beginner_mode_enabled;
+  update_high_score_display();
 }
 
 
@@ -236,19 +235,59 @@ function update_version_labels() {
   document.querySelectorAll('.version-label').forEach((el) => { el.textContent = APP_VERSION; });
 }
 
+function get_current_high_score() {
+  return beginner_mode_enabled ? beginner_high_score : normal_high_score;
+}
+
 function update_high_score_display() {
-  if (start_high_score) start_high_score.textContent = `Best ${high_score}`;
-  if (game_over_high_score) game_over_high_score.textContent = `Best ${high_score}`;
+  const label = beginner_mode_enabled ? 'Easy Best' : 'Best';
+  const current_best = get_current_high_score();
+  if (start_high_score) start_high_score.textContent = `${label} ${current_best}`;
+  if (game_over_high_score) game_over_high_score.textContent = `${label} ${current_best}`;
 }
 
 function update_high_score() {
-  if (score > high_score) {
-    high_score = score;
-    try { localStorage.setItem('ip_runner_high_score', String(high_score)); } catch (_) {}
+  if (beginner_mode_enabled) {
+    if (score > beginner_high_score) {
+      beginner_high_score = score;
+      try { localStorage.setItem('ip_runner_beginner_high_score', String(beginner_high_score)); } catch (_) {}
+    }
+  } else if (score > normal_high_score) {
+    normal_high_score = score;
+    try { localStorage.setItem('ip_runner_high_score', String(normal_high_score)); } catch (_) {}
   }
   update_version_labels();
-update_high_score_display();
+  update_high_score_display();
 }
+
+function get_ground_gravity_scale() {
+  return beginner_mode_enabled ? params.pendulum_gravity_scale * 0.48 : params.pendulum_gravity_scale;
+}
+
+function get_ground_damping() {
+  return beginner_mode_enabled ? params.angular_damping_ground * 1.65 : params.angular_damping_ground;
+}
+
+function get_air_damping() {
+  return beginner_mode_enabled ? params.angular_damping_air * 2.2 : params.angular_damping_air;
+}
+
+function get_lateral_air_drag() {
+  return beginner_mode_enabled ? params.lateral_air_drag * 1.7 : params.lateral_air_drag;
+}
+
+function get_air_stabilizing_accel() {
+  return beginner_mode_enabled ? 4.8 : 3.0;
+}
+
+function get_air_stabilizing_damping() {
+  return beginner_mode_enabled ? 0.55 : 0.35;
+}
+
+function get_pit_spacing_multiplier() {
+  return beginner_mode_enabled ? 1.65 : 1;
+}
+
 
 function get_difficulty_level() {
   return Math.floor(score / 200);
@@ -278,11 +317,36 @@ function ground_y_at(x) {
 }
 
 function initialize_audio() {
-  if (audio_enabled) return;
+  if (audio_context) {
+    audio_enabled = true;
+    return audio_context;
+  }
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) return;
+  if (!AudioCtx) return null;
   audio_context = new AudioCtx();
   audio_enabled = true;
+  return audio_context;
+}
+
+function activate_audio_from_user_gesture() {
+  const ctx = initialize_audio();
+  if (!ctx) return Promise.resolve(null);
+
+  const resume_promise = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+  return resume_promise.then(() => {
+    if (!audio_unlocked) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.025);
+      audio_unlocked = true;
+    }
+    return ctx;
+  }).catch(() => ctx);
 }
 
 function ensure_audio_running() {
@@ -422,12 +486,12 @@ function read_params_from_ui() {
 }
 
 function reset_game() {
-  sync_mobile_toggles();
+  sync_beginner_toggles();
   read_params_from_ui();
-  initialize_audio();
-  ensure_audio_running();
-  start_bgm();
-  play_start_sound();
+  activate_audio_from_user_gesture().then(() => {
+    start_bgm();
+    play_start_sound();
+  });
 
   const foot_x = 90;
   const foot_y = ground_y_at(foot_x);
@@ -506,7 +570,7 @@ function generate_pits(from_x, to_x, obstacle_list = []) {
   let x = Math.max(760, from_x + random_range(520, 780));
 
   while (x < to_x) {
-    const width = random_range(64, 132) * clamp(1 - get_difficulty_level() * 0.015, 0.82, 1);
+    const width = random_range(58, 122) * clamp(1 - get_difficulty_level() * 0.015, 0.82, 1);
     const overlaps_start_zone = x < 360;
     const overlaps_obstacle = obstacle_overlaps_pit(x, x + width, obstacle_list);
 
@@ -514,7 +578,7 @@ function generate_pits(from_x, to_x, obstacle_list = []) {
       list.push({ x, width });
     }
 
-    x += random_range(520, 820) * clamp(1 - get_difficulty_level() * 0.025, 0.68, 1);
+    x += random_range(520, 820) * get_pit_spacing_multiplier() * clamp(1 - get_difficulty_level() * 0.025, 0.68, 1);
   }
 
   return list;
@@ -749,7 +813,7 @@ function update_grounded_kinematics(dt) {
   if (leave_ground_if_support_missing()) return;
 
   const control = get_rotation_control();
-  const gravity_angular_accel = params.pendulum_gravity_scale * (params.gravity / params.leg_length) * Math.sin(player.angle);
+  const gravity_angular_accel = get_ground_gravity_scale() * (params.gravity / params.leg_length) * Math.sin(player.angle);
   let landing_angular_accel = 0;
   if (player.landing_torque_timer > 0) {
     const fade = player.landing_torque_timer / 0.12;
@@ -758,7 +822,7 @@ function update_grounded_kinematics(dt) {
   }
 
   player.omega += (control * params.angular_accel + gravity_angular_accel + landing_angular_accel) * dt;
-  player.omega -= player.omega * params.angular_damping_ground * dt;
+  player.omega -= player.omega * get_ground_damping() * dt;
   player.omega = clamp(player.omega, -params.max_angular_speed, params.max_angular_speed);
   player.angle = normalize_angle(player.angle + player.omega * dt);
 
@@ -784,14 +848,14 @@ function update_grounded_kinematics(dt) {
 
 function update_air_kinematics(dt) {
   const control = get_rotation_control();
-  const air_stabilizing_accel = -3.0 * Math.sin(player.angle) - 0.35 * player.omega;
+  const air_stabilizing_accel = -get_air_stabilizing_accel() * Math.sin(player.angle) - get_air_stabilizing_damping() * player.omega;
   player.omega += (control * params.angular_accel + air_stabilizing_accel) * dt;
-  player.omega -= player.omega * params.angular_damping_air * dt;
+  player.omega -= player.omega * get_air_damping() * dt;
   player.omega = clamp(player.omega, -params.max_angular_speed, params.max_angular_speed);
   player.angle = normalize_angle(player.angle + player.omega * dt);
 
   player.vy += params.gravity * dt;
-  player.vx -= player.vx * params.lateral_air_drag * dt;
+  player.vx -= player.vx * get_lateral_air_drag() * dt;
   player.body_x += player.vx * dt;
   player.body_y += player.vy * dt;
 
@@ -1474,7 +1538,14 @@ function draw_hud() {
   ctx.fillText(`Score ${score}`, right_x, panel_y + (mobile ? 39 : 29));
   ctx.font = `bold ${best_font}px Arial`;
   ctx.fillStyle = '#bae6fd';
-  ctx.fillText(`Best ${high_score}`, right_x, panel_y + (mobile ? 68 : 50));
+  ctx.fillText(`${beginner_mode_enabled ? 'Easy ' : 'Best '}${get_current_high_score()}`, right_x, panel_y + (mobile ? 68 : 50));
+
+  if (beginner_mode_enabled) {
+    ctx.textAlign = 'left';
+    ctx.font = mobile ? 'bold 18px Arial' : 'bold 13px Arial';
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.42)';
+    ctx.fillText('EASY MODE', mobile ? 18 : 20, mobile ? 28 : 116);
+  }
 }
 
 function draw_start_preview() {
@@ -1534,7 +1605,7 @@ function end_game() {
   else play_game_over_sound();
   if (final_score) final_score.textContent = `Score: ${score}`;
   if (game_over_message) game_over_message.textContent = game_over_reason;
-  sync_mobile_toggles();
+  sync_beginner_toggles();
   game_over_screen.classList.add('visible');
 }
 
@@ -1569,8 +1640,7 @@ function game_loop(now) {
 }
 
 window.addEventListener('keydown', (event) => {
-  initialize_audio();
-  ensure_audio_running();
+  activate_audio_from_user_gesture();
 
   if (event.code === 'ArrowLeft') keys.left = true;
   if (event.code === 'ArrowRight') keys.right = true;
@@ -1595,33 +1665,30 @@ window.addEventListener('keyup', (event) => {
 });
 
 start_button.addEventListener('click', () => {
-  initialize_audio();
-  ensure_audio_running();
-  reset_game();
+  activate_audio_from_user_gesture().then(() => reset_game());
 });
 return_button.addEventListener('click', () => {
-  initialize_audio();
-  ensure_audio_running();
-  reset_game();
+  activate_audio_from_user_gesture().then(() => reset_game());
 });
 
 
-if (mobile_mode_toggle) {
-  mobile_mode_toggle.addEventListener('change', () => {
-    sync_mobile_toggles(mobile_mode_toggle);
+if (beginner_mode_toggle) {
+  beginner_mode_toggle.addEventListener('change', () => {
+    sync_beginner_toggles(beginner_mode_toggle);
     update_mobile_controls_visibility();
   });
 }
 
-if (game_over_mobile_mode_toggle) {
-  game_over_mobile_mode_toggle.addEventListener('change', () => {
-    sync_mobile_toggles(game_over_mobile_mode_toggle);
+if (game_over_beginner_mode_toggle) {
+  game_over_beginner_mode_toggle.addEventListener('change', () => {
+    sync_beginner_toggles(game_over_beginner_mode_toggle);
     update_mobile_controls_visibility();
   });
 }
 
 if (mobile_rotation_pad) {
   const set_rotation_from_event = (event) => {
+    activate_audio_from_user_gesture();
     const point = event.touches && event.touches.length ? event.touches[0] : event;
     mobile_rotation_input = mobile_pointer_to_zone(point.clientX);
     update_mobile_rotation_pad_visual();
@@ -1648,8 +1715,7 @@ if (mobile_rotation_pad) {
 
 if (mobile_jump_button) {
   const press_jump = (event) => {
-    initialize_audio();
-    ensure_audio_running();
+    activate_audio_from_user_gesture();
     if (state === 'start') reset_game();
     else if (state === 'game_over') reset_game();
     else keys.space = true;
@@ -1667,6 +1733,9 @@ if (mobile_jump_button) {
   mobile_jump_button.addEventListener('touchstart', press_jump, { passive: false });
   mobile_jump_button.addEventListener('touchend', release_jump, { passive: false });
 }
+
+window.addEventListener('pointerdown', () => { activate_audio_from_user_gesture(); }, { passive: true });
+window.addEventListener('touchstart', () => { activate_audio_from_user_gesture(); }, { passive: true });
 
 window.addEventListener('resize', () => { update_mobile_controls_visibility(); resize_canvas_to_display(); });
 window.addEventListener('orientationchange', () => { setTimeout(() => { update_mobile_controls_visibility(); resize_canvas_to_display(); }, 120); });

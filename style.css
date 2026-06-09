@@ -237,7 +237,7 @@ h2 {
 
 .mobile-rotation-pad {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: min(68vw, 720px);
   min-height: 156px;
   border: 1px solid rgba(226, 232, 240, 0.18);
@@ -264,13 +264,7 @@ h2 {
   border-right: 0;
 }
 
-.rotation-neutral {
-  color: rgba(226, 232, 240, 0.72);
-  font-size: 34px;
-}
-
 .mobile-rotation-pad.left-active .rotation-left,
-.mobile-rotation-pad.neutral-active .rotation-neutral,
 .mobile-rotation-pad.right-active .rotation-right {
   background: rgba(125, 211, 252, 0.18);
   transform: scale(0.985);
